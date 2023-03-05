@@ -42,12 +42,17 @@ public class EnnemyInteractions : MonoBehaviour
                 isBouncing = true;
                 Invoke("stopBouncing", 0.5f);
 
-                HeroKnight.takeDamage(damage);
+                // HeroKnight.takeDamage(damage, direction);
             }
         }
     }
 
     void stopBouncing() {
         isBouncing = false;
+    }
+
+    public void takeDamage() {
+        Debug.Log("ennemy took damage");
+        this.movementSpeed = -movementSpeed;
     }
 }

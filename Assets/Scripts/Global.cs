@@ -28,9 +28,9 @@ public class Global : MonoBehaviour
         }
     }
 
-    public void attack() {
-        Debug.Log(player.GetComponent<HeroKnight>().transform.position);
-    }
+    // public void attack() {
+    //     Debug.Log(player.GetComponent<HeroKnight>().transform.position);
+    // }
 
     // public void setHealth(int health)
     // {

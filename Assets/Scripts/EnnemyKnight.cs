@@ -1,15 +1,18 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class HeroKnight : MonoBehaviour {
+public class EnnemyKnight : MonoBehaviour {
 
-    [SerializeField] float      m_speed = 4.0f;
+    [SerializeField] float      m_speed = 2.0f;
     [SerializeField] float      m_jumpForce = 7.5f;
     // [SerializeField] float      m_rollForce = 6.0f;
     [SerializeField] bool       m_noBlood = false;
     [SerializeField] GameObject m_slideDust;
 
-    private static Animator            m_animator;
+    [SerializeField] Animator m_animator;
+
+
+    // private static Animator            m_animator;
     private Rigidbody2D         m_body2d;
     private Sensor_HeroKnight   m_groundSensor;
     // private Sensor_HeroKnight   m_wallSensorR1;
@@ -28,14 +31,18 @@ public class HeroKnight : MonoBehaviour {
 
     private static string playerState = "inactive";
 
-    private int playerHealth = 100;
+    private static int ennemyHealth = 25;
 
+    private bool isDead = false;
     private bool isBouncing = false;
+
+    private int step = 0;
+    private float inputX = 1;
 
     // Use this for initialization
     void Start ()
     {
-        m_animator = GetComponent<Animator>();
+        // m_animator = GetComponent<Animator>();
         m_body2d = GetComponent<Rigidbody2D>();
         m_groundSensor = transform.Find("GroundSensor").GetComponent<Sensor_HeroKnight>();
         // m_wallSensorR1 = transform.Find("WallSensor_R1").GetComponent<Sensor_HeroKnight>();
@@ -49,6 +56,7 @@ public class HeroKnight : MonoBehaviour {
     {
         // Increase timer that controls attack combo
         m_timeSinceAttack += Time.deltaTime;
+
 
         // Increase timer that checks roll duration
         // if(m_rolling)
@@ -72,27 +80,39 @@ public class HeroKnight : MonoBehaviour {
             m_animator.SetBool("Grounded", m_grounded);
         }
 
+        //Set AirSpeed in animator
+        m_animator.SetFloat("AirSpeedY", m_body2d.velocity.y);
+
         // -- Handle input and movement --
-        float inputX = Input.GetAxis("Horizontal");
+        // float inputX = Input.GetAxis("Horizontal");
+        // float inputX = 1;
+
+        this.step ++;
+        // Debug.Log("step: " + this.step);
+
+        if (this.step > 1000) {
+            this.step = 0;
+            inputX= -inputX;
+        }
 
         // Swap direction of sprite depending on walk direction
-        if (inputX > 0 && !Global.isDead)
+        if (inputX > 0 && ennemyHealth > 0 && !isDead)
         {
             GetComponent<SpriteRenderer>().flipX = false;
             m_facingDirection = 1;
         }
             
-        else if (inputX < 0 && !Global.isDead)
+        else if (inputX < 0 && !isDead)
         {
             GetComponent<SpriteRenderer>().flipX = true;
             m_facingDirection = -1;
         }
 
         // Move
-        if (isBouncing == false && playerState != "attacking" && playerState != "hurt" && playerState != "dead" && !Global.isDead)
+        if (isBouncing == false && playerState != "attacking" && playerState != "hurt" && !isDead && m_grounded)
+        {
             m_body2d.velocity = new Vector2(inputX * m_speed, m_body2d.velocity.y);
-        //Set AirSpeed in animator
-        m_animator.SetFloat("AirSpeedY", m_body2d.velocity.y);
+        }
 
         // -- Handle Animations --
         // //Wall Slide
@@ -100,55 +120,52 @@ public class HeroKnight : MonoBehaviour {
         // m_animator.SetBool("WallSlide", m_isWallSliding);
 
         //Death
-        if (Input.GetKeyDown("e")) {
-            m_animator.SetBool("noBlood", m_noBlood);
-            m_animator.SetTrigger("Death");
-            playerHealth = 0;
-            playerState = "dead";
-            Global.isDead = true;
-        }
+        // if (Input.GetKeyDown("e")) {
+        //     m_animator.SetBool("noBlood", m_noBlood);
+        //     m_animator.SetTrigger("Death");
+        // }
             
-        //Hurt
-        else if (Input.GetKeyDown("a"))
-            m_animator.SetTrigger("Hurt");
+        // //Hurt
+        // else if (Input.GetKeyDown("a"))
+        //     m_animator.SetTrigger("Hurt");
 
         //Attack
-        else if(Input.GetMouseButtonDown(0) && m_timeSinceAttack > 0.25f)
-        {
-            m_currentAttack++;
+        // else if(Input.GetMouseButtonDown(0) && m_timeSinceAttack > 0.25f)
+        // {
+        //     m_currentAttack++;
 
-            // Loop back to one after third attack
-            if (m_currentAttack > 3)
-                m_currentAttack = 1;
+        //     // Loop back to one after third attack
+        //     if (m_currentAttack > 3)
+        //         m_currentAttack = 1;
 
-            // Reset Attack combo if time since last attack is too large
-            if (m_timeSinceAttack > 1.0f)
-                m_currentAttack = 1;
+        //     // Reset Attack combo if time since last attack is too large
+        //     if (m_timeSinceAttack > 1.0f)
+        //         m_currentAttack = 1;
 
-            // Call one of three attack animations "Attack1", "Attack2", "Attack3"
-            m_animator.SetTrigger("Attack" + m_currentAttack);
+        //     // Call one of three attack animations "Attack1", "Attack2", "Attack3"
+        //     m_animator.SetTrigger("Attack" + m_currentAttack);
 
-            playerState = "inactive";
-            // Global.attack();
-            playerAttack();
+        //     playerState = "inactive";
+        //     // Global.attack();
+        //     playerAttack();
 
-            // Reset timer
-            m_timeSinceAttack = 0.0f;
-        }
+        //     // Reset timer
+        //     m_timeSinceAttack = 0.0f;
+        // }
 
         // Block
-        else if (Input.GetMouseButtonDown(1))
-        {
-            playerState = "blocking";
-            m_animator.SetTrigger("Block");
-            m_animator.SetBool("IdleBlock", true);
-        }
+        // else if (Input.GetMouseButtonDown(1))
+        // {
+        //     playerState = "blocking";
+        //     m_animator.SetTrigger("Block");
+        //     m_animator.SetBool("IdleBlock", true);
+        // }
 
-        else if (Input.GetMouseButtonUp(1))
-        {
-            playerState = "inactive";
-            m_animator.SetBool("IdleBlock", false);
-        }
+        // else if (Input.GetMouseButtonUp(1))
+        // {
+        //     playerState = "inactive";
+        //     m_animator.SetBool("IdleBlock", false);
+        // }
 
         // Roll
         // else if (Input.GetKeyDown("left shift") && !m_rolling && !m_isWallSliding)
@@ -159,17 +176,17 @@ public class HeroKnight : MonoBehaviour {
         // }
 
         //Jump
-        else if (Input.GetKeyDown("space") && m_grounded)
-        {
-            m_animator.SetTrigger("Jump");
-            m_grounded = false;
-            m_animator.SetBool("Grounded", m_grounded);
-            m_body2d.velocity = new Vector2(m_body2d.velocity.x, m_jumpForce);
-            m_groundSensor.Disable(0.2f);
-        }
+        // else if (Input.GetKeyDown("space") && m_grounded)
+        // {
+        //     m_animator.SetTrigger("Jump");
+        //     m_grounded = false;
+        //     m_animator.SetBool("Grounded", m_grounded);
+        //     m_body2d.velocity = new Vector2(m_body2d.velocity.x, m_jumpForce);
+        //     m_groundSensor.Disable(0.2f);
+        // }
 
         //Run
-        else if (Mathf.Abs(inputX) > Mathf.Epsilon && !Global.isDead)
+        if (Mathf.Abs(inputX) > Mathf.Epsilon && !isDead)
         {
             // Reset timer
             m_delayToIdle = 0.05f;
@@ -177,7 +194,7 @@ public class HeroKnight : MonoBehaviour {
         }
 
         //Idle
-        else if (!Global.isDead)
+        else if (!isDead)
         {
             // Prevents flickering transitions to idle
             m_delayToIdle -= Time.deltaTime;
@@ -186,18 +203,18 @@ public class HeroKnight : MonoBehaviour {
         }
     }
 
-    void playerAttack()
-    {
-        // Debug.Log("playerAttack");
-        playerState = "attacking";
-        Invoke("playerAttackEnd", 0.25f);
-    }
+    // void playerAttack()
+    // {
+    //     // Debug.Log("playerAttack");
+    //     playerState = "attacking";
+    //     Invoke("playerAttackEnd", 0.25f);
+    // }
 
-    void playerAttackEnd()
-    {
-        // Debug.Log("playerAttackEnd");
-        playerState = "inactive";
-    }
+    // void playerAttackEnd()
+    // {
+    //     // Debug.Log("playerAttackEnd");
+    //     playerState = "inactive";
+    // }
 
     // Animation Events
     // Called in slide animation.
@@ -219,49 +236,64 @@ public class HeroKnight : MonoBehaviour {
     //     }
     // }
 
-    public static string getPlayerState()
-    {
-        return playerState;
-    }
+    // public static string getPlayerState()
+    // {
+    //     return playerState;
+    // }
 
     public void takeDamage(int damage, int direction)
     {
-        if (playerState == "blocking")
+        float bounce = 1f;
+        m_body2d.AddForce(transform.right * bounce * direction, ForceMode2D.Impulse);
+        m_body2d.AddForce(transform.up * bounce, ForceMode2D.Impulse);
+        isBouncing = true;
+        Invoke("stopBouncing", 0.5f);
+        ennemyHealth -= damage;
+        // Global.setHealth(playerHealth);
+        if(ennemyHealth <= 0 && !isDead)
         {
-            // Debug.Log("Blocked");
-        }
-        else
+            m_animator.SetTrigger("Death");
+            Invoke("killEnnemy", 0.25f);
+            // isDead = true;
+            // isDead = true;
+            // Global.isDead = true;
+        } else
         {
-            float bounce = 2f;
-            m_body2d.AddForce(transform.right * bounce * direction, ForceMode2D.Impulse);
-            m_body2d.AddForce(transform.up * bounce, ForceMode2D.Impulse);
-            isBouncing = true;
-            Invoke("stopBouncing", 0.5f);
-            playerHealth -= damage;
-            // Global.setHealth(playerHealth);
-            if(playerHealth <= 0)
-            {
-                m_animator.SetTrigger("Death");
-                Global.isDead = true;
-            } else
-            {
-                m_animator.SetTrigger("Hurt");
-            }
+            m_animator.SetTrigger("Hurt");
         }
     }
 
-    
+    void killEnnemy()
+    {
+        isDead = true;
+        Debug.Log("Ennemy killed");
+        Invoke("destroyEnnemy", 2f);
+    }
+
+    void destroyEnnemy()
+    {
+        Destroy(gameObject);
+    }
+
     void stopBouncing()
     {
         isBouncing = false;
     }
-    
 
-    void OnTriggerStay2D(Collider2D other)
+    void OnTriggerEnter2D(Collider2D other)
     {
-        if(other.gameObject.tag == "Enemy") {
-            if(playerState == "attacking")
-                other.gameObject.GetComponent<EnnemyKnight>().takeDamage(25, m_facingDirection);
+        if(other.gameObject.tag == "Player" && m_grounded && !isDead && m_timeSinceAttack >= 0.5f) {
+            m_timeSinceAttack = 0.0f;
+            m_animator.SetTrigger("Attack1");
+            other.gameObject.GetComponent<HeroKnight>().takeDamage(25, m_facingDirection);
         }
     }
+
+    // void OnTriggerStay2D(Collider2D other)
+    // {
+    //     if(other.gameObject.tag == "Enemy") {
+    //         if(playerState == "attacking")
+    //         other.gameObject.GetComponent<EnnemyInteractions>().takeDamage();
+    //     }
+    // }
 }
