@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class Global : MonoBehaviour
 {
@@ -29,10 +30,19 @@ public class Global : MonoBehaviour
         if(isDead)
         {
             Debug.Log("You died");
+            Invoke("returnToMenu", 0.5f);
+
         }
 
         if(win) {
             Debug.Log("You win");
+            Invoke("returnToMenu", 0.5f);
+
         }
+    }
+
+    public void returnToMenu()
+    {
+        SceneManager.LoadScene(1);
     }
 }

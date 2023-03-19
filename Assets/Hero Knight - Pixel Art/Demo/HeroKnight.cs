@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+
 
 public class HeroKnight : MonoBehaviour {
 
@@ -26,12 +28,27 @@ public class HeroKnight : MonoBehaviour {
 
     public GameObject healtText;
 
+    private float inputX = 0;
+
+
     // Use this for initialization
     void Start ()
     {
         m_animator = GetComponent<Animator>();
         m_body2d = GetComponent<Rigidbody2D>();
         m_groundSensor = transform.Find("GroundSensor").GetComponent<Sensor_HeroKnight>();
+    }
+
+    public void MoveRight(){
+        inputX = 1;
+    }
+
+    public void StopMoving(){
+        inputX = 0;
+    }
+
+    public void MoveLeft(){
+        inputX = -1;
     }
 
     // Update is called once per frame
@@ -54,9 +71,6 @@ public class HeroKnight : MonoBehaviour {
             m_animator.SetBool("Grounded", m_grounded);
         }
 
-        // -- Handle input and movement --
-        float inputX = Input.GetAxis("Horizontal");
-
         // Swap direction of sprite depending on walk direction
         if (inputX > 0 && !Global.isDead)
         {
@@ -76,22 +90,42 @@ public class HeroKnight : MonoBehaviour {
         //Set AirSpeed in animator
         m_animator.SetFloat("AirSpeedY", m_body2d.velocity.y);
 
-        //Death
-        if (Input.GetKeyDown("e")) {
-            m_animator.SetBool("noBlood", m_noBlood);
-            m_animator.SetTrigger("Death");
-            playerHealth = 0;
-            playerState = "dead";
-            Global.isDead = true;
-        }
-            
-        //Hurt
-        else if (Input.GetKeyDown("a"))
-            m_animator.SetTrigger("Hurt");
-
-        //Attack
-        else if(Input.GetMouseButtonDown(0) && m_timeSinceAttack > 0.25f)
+        //Run
+        if (Mathf.Abs(inputX) > Mathf.Epsilon && !Global.isDead)
         {
+            // Reset timer
+            m_delayToIdle = 0.05f;
+            m_animator.SetInteger("AnimState", 1);
+        }
+
+        //Idle
+        else if (!Global.isDead)
+        {
+            // Prevents flickering transitions to idle
+            m_delayToIdle -= Time.deltaTime;
+                if(m_delayToIdle < 0)
+                    m_animator.SetInteger("AnimState", 0);
+        }
+    }
+
+    public void Jump(){
+        if (m_grounded) {
+            m_animator.SetTrigger("Jump");
+            m_grounded = false;
+            m_animator.SetBool("Grounded", m_grounded);
+            m_body2d.velocity = new Vector2(m_body2d.velocity.x, m_jumpForce);
+            m_groundSensor.Disable(0.2f);
+        }
+    }
+
+    public void Block(){
+        playerState = "blocking";
+        m_animator.SetTrigger("Block");
+        m_animator.SetBool("IdleBlock", true);
+    }
+
+    public void Attack(){
+        if(m_timeSinceAttack > 0.25f){
             m_currentAttack++;
 
             // Loop back to one after third attack
@@ -111,47 +145,6 @@ public class HeroKnight : MonoBehaviour {
 
             // Reset timer
             m_timeSinceAttack = 0.0f;
-        }
-
-        // Block
-        else if (Input.GetMouseButtonDown(1))
-        {
-            playerState = "blocking";
-            m_animator.SetTrigger("Block");
-            m_animator.SetBool("IdleBlock", true);
-        }
-
-        else if (Input.GetMouseButtonUp(1))
-        {
-            playerState = "inactive";
-            m_animator.SetBool("IdleBlock", false);
-        }
-
-        //Jump
-        else if (Input.GetKeyDown("space") && m_grounded)
-        {
-            m_animator.SetTrigger("Jump");
-            m_grounded = false;
-            m_animator.SetBool("Grounded", m_grounded);
-            m_body2d.velocity = new Vector2(m_body2d.velocity.x, m_jumpForce);
-            m_groundSensor.Disable(0.2f);
-        }
-
-        //Run
-        else if (Mathf.Abs(inputX) > Mathf.Epsilon && !Global.isDead)
-        {
-            // Reset timer
-            m_delayToIdle = 0.05f;
-            m_animator.SetInteger("AnimState", 1);
-        }
-
-        //Idle
-        else if (!Global.isDead)
-        {
-            // Prevents flickering transitions to idle
-            m_delayToIdle -= Time.deltaTime;
-                if(m_delayToIdle < 0)
-                    m_animator.SetInteger("AnimState", 0);
         }
     }
 
