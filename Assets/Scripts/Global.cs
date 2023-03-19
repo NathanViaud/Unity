@@ -7,7 +7,7 @@ public class Global : MonoBehaviour
 {
     private GameObject player = null;
     public static bool isDead = false;
-    public GameObject healthBar;
+    public static bool win = false;
 
     void Start()
     {
@@ -21,20 +21,18 @@ public class Global : MonoBehaviour
         {
             isDead = true;
         }
+        
+        if(player.transform.position.x >= 40) {
+            win = true;
+        }
 
         if(isDead)
         {
             Debug.Log("You died");
         }
+
+        if(win) {
+            Debug.Log("You win");
+        }
     }
-
-    // public void attack() {
-    //     Debug.Log(player.GetComponent<HeroKnight>().transform.position);
-    // }
-
-    // public void setHealth(int health)
-    // {
-    //     healthBar.GetComponent<Text>().text = "Health: " + health;
-    // }
-
 }
